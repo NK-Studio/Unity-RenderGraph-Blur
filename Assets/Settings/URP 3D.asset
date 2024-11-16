@@ -68,9 +68,7 @@ MonoBehaviour:
   Settings:
     Event: 500
     ShaderTagList:
-    - Universal2D
-    - UGUIPrepass
-    - UGUIDrawpass
+    - SpriteRenderPrepass
     LayerMask:
       serializedVersion: 2
       m_Bits: 64
