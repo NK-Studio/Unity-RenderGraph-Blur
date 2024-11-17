@@ -25,17 +25,19 @@ namespace NKStudio
 
         private readonly RenderQueueType _renderQueueType;
         private readonly LayerMask _layerMask;
-        private readonly List<ShaderTagId> _shaderTagIdList = new();
+        private readonly List<ShaderTagId> _filterShaderTagIdList = new();
+        private readonly List<ShaderTagId> _drawShaderTagIdList = new();
 
         private Material _material;
         
         private int _blurIteration = 3;
         private float _blurOffset = 1.0f;
         
-        private static readonly int k_DownsampleTexPropertyName = Shader.PropertyToID("_MainTex");
+        private static readonly int k_MainTexPropertyName = Shader.PropertyToID("_MainTex");
+        private static readonly int k_BlurTexPropertyName = Shader.PropertyToID("_BlurTex");
         private static readonly int k_BlurOffsetPropertyName = Shader.PropertyToID("_blurOffset");
         
-        public LayerFilterRendererPass(LayerMask layerMask, List<string> shaderTagIdList,
+        public LayerFilterRendererPass(LayerMask layerMask, List<string> shaderTagIdList, List<string> drawShaderTagIdList,
             RenderPassEvent injectionPoint, Material material)
         {
             _layerMask = layerMask;
@@ -43,9 +45,13 @@ namespace NKStudio
             _material = material;
 
             // 셰이더 태그 ID 목록 초기화 및 설정
-            _shaderTagIdList.Clear();
+            _filterShaderTagIdList.Clear();
             foreach (string tag in shaderTagIdList)
-                _shaderTagIdList.Add(new ShaderTagId(tag));
+                _filterShaderTagIdList.Add(new ShaderTagId(tag));
+            
+            _drawShaderTagIdList.Clear();
+            foreach (string tag in drawShaderTagIdList)
+                _drawShaderTagIdList.Add(new ShaderTagId(tag));
             
             requiresIntermediateTexture = true;
         }
@@ -62,7 +68,7 @@ namespace NKStudio
         /// <param name="frameData">프레임 데이터를 포함하는 컨텍스트 컨테이너입니다.</param>
         /// <param name="passData">초기화할 패스 데이터입니다.</param>
         /// <param name="renderGraph">렌더러 목록을 생성하는 데 사용할 렌더 그래프입니다.</param>
-        private void InitRendererList(ContextContainer frameData, ref FilterPassData passData, RenderGraph renderGraph)
+        private void InitRendererList(ContextContainer frameData, ref FilterPassData passData, RenderGraph renderGraph, List<ShaderTagId> shaderTagIdList)
         {
             // 유니버설 렌더 파이프라인에서 관련 프레임 데이터에 액세스
             UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
@@ -74,10 +80,10 @@ namespace NKStudio
 
             // 정렬 기준 설정
             SortingCriteria sortingCriteria = SortingCriteria.CommonTransparent;
-
+            
             // 드로우 설정 생성
             DrawingSettings drawSettings =
-                CreateDrawingSettings(_shaderTagIdList, renderingData, cameraData, lightData, sortingCriteria);
+                CreateDrawingSettings(shaderTagIdList, renderingData, cameraData, lightData, sortingCriteria);
 
             // 필터링 설정 생성
             FilteringSettings filteringSettings = new FilteringSettings(renderQueueRange, _layerMask);
@@ -116,11 +122,13 @@ namespace NKStudio
             var stepCount = data.Scratches.Length;
             for (int i = 0; i < stepCount; i++)
             {
-                context.cmd.SetGlobalTexture(k_DownsampleTexPropertyName, source);
+                context.cmd.SetGlobalTexture(k_MainTexPropertyName, source);
                 context.cmd.SetRenderTarget(data.Scratches[i]); // Target Destination
                 Blitter.BlitTexture(unsafeCmd, data.Source, new Vector4(1, 1, 0, 0), data.TargetMaterial, 0); // Blit
                 source = data.Scratches[i]; // Set Next Source
             }
+            
+            context.cmd.SetGlobalTexture(k_BlurTexPropertyName, source);
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -142,7 +150,7 @@ namespace NKStudio
                    renderGraph.AddRasterRenderPass<FilterPassData>("NK Mask", out var passData, profilingSampler))
             {
                 //  렌더러 목록 초기화
-                InitRendererList(frameData, ref passData, renderGraph);
+                InitRendererList(frameData, ref passData, renderGraph, _filterShaderTagIdList);
 
                 // 이 Pass에서 사용할 리소스로 선언하기
                 builder.UseRendererList(passData.RendererList);
@@ -205,7 +213,7 @@ namespace NKStudio
             using (var builder = renderGraph.AddRasterRenderPass<FilterPassData>("Final Draw", out var passData))
             {
                 //  렌더러 목록 초기화
-                InitRendererList(frameData, ref passData, renderGraph);
+                InitRendererList(frameData, ref passData, renderGraph, _drawShaderTagIdList);
                 
                 // 방금 생성한 RendererList를 UseRendererList()를 통해 이 패스에 대한 입력 종속성으로 선언합니다.
                 builder.UseRendererList(passData.RendererList);

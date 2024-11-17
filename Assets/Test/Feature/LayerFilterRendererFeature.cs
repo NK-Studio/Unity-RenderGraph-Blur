@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Serialization;
 
 namespace NKStudio
 {
@@ -18,7 +19,8 @@ namespace NKStudio
             /// </summary>
             public RenderPassEvent Event = RenderPassEvent.AfterRenderingTransparents;
 
-            public List<string> ShaderTagList = new() { "SpriteRenderPrepass" };
+            public List<string> FilterShaderTag = new() { "SpriteRenderPrepass" };
+            public List<string> DrawShaderTag = new() { "SpriteRenderDrawpass" };
 
             public LayerMask LayerMask = 0;
 
@@ -46,7 +48,7 @@ namespace NKStudio
             
             _blurMaterial = CoreUtils.CreateEngineMaterial(Settings.TestShader);
             _layerFilterRendererPass = new LayerFilterRendererPass(Settings.LayerMask,
-                Settings.ShaderTagList, Settings.Event, _blurMaterial);
+                Settings.FilterShaderTag, Settings.DrawShaderTag ,Settings.Event, _blurMaterial);
             _layerFilterRendererPass.Setup(Settings.BlurIteration, Settings.BlurOffset);
         }
 

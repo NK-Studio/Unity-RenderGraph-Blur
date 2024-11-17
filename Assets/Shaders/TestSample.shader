@@ -29,8 +29,8 @@ Shader "CatDarkGame/Sprites/LayerFilterSpriteBlur"
     SAMPLER(sampler_MainTex);
     float4 _MainTex_ST;
 
-    TEXTURE2D(_LayerFilterCopypassBufferTex);
-    SAMPLER(sampler_LayerFilterCopypassBufferTex);
+    TEXTURE2D(_BlurTex);
+    SAMPLER(sampler_BlurTex);
 
     half _BlendAmount;
 
@@ -63,7 +63,7 @@ Shader "CatDarkGame/Sprites/LayerFilterSpriteBlur"
         // 자연스러운 블랜딩을 위해 mipmap 샘플링 이용
 
         float2 uv_prepass = i.screenPosition.xy / i.screenPosition.w;
-        half4 prepassMap = SAMPLE_TEXTURE2D(_LayerFilterCopypassBufferTex, sampler_LayerFilterCopypassBufferTex,
+        half4 prepassMap = SAMPLE_TEXTURE2D(_BlurTex, sampler_BlurTex,
   uv_prepass);
 
         half4 finalColor = lerp(baseMap, prepassMap, blendAmount);
