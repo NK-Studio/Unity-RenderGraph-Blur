@@ -1,77 +1,57 @@
 ﻿Shader "Hidden/CatDarkGame/LayerFilterRendererFeature/LayerFilterBlurRT"
 {
-    Properties
-    { 
-       _blurOffset ("BlurOffset", float) = 1.0
+    HLSLINCLUDE
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+    #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+
+    TEXTURE2D(_MainTex);
+    SAMPLER(sampler_linear_clamp);
+    float4 _MainTex_TexelSize;
+    float _blurOffset;
+
+    float4 blurFrag(Varyings input) : SV_Target
+    {
+        float2 baseMapUV = input.texcoord;
+
+        float offset = _blurOffset;
+        float4 outputColor = SAMPLE_TEXTURE2D_X(_MainTex, sampler_linear_clamp,
+                                                baseMapUV + float2(_MainTex_TexelSize.x * -offset, 0.0));
+        outputColor += SAMPLE_TEXTURE2D_X(_MainTex, sampler_linear_clamp,
+            baseMapUV + float2(_MainTex_TexelSize.x *offset, 0.0));
+        outputColor += SAMPLE_TEXTURE2D_X(_MainTex, sampler_linear_clamp,
+            baseMapUV + float2(0.0, _MainTex_TexelSize.y * -offset));
+        outputColor += SAMPLE_TEXTURE2D_X(_MainTex, sampler_linear_clamp,
+            baseMapUV + float2(0.0,_MainTex_TexelSize.y * offset));
+
+        float4 finalColor = outputColor * 0.25f;
+        return finalColor;
     }
+    ENDHLSL
 
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "Queue"="Geometry" "RenderPipeline" = "UniversalPipeline" }
-       
+        Cull Off
+        ZWrite Off
+        ZTest Always
+
+        Tags
+        {
+            "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" "Queue" = "Transparent"
+        }
         Pass
         {
-            Name  "LayerFilterBlurRT"
-            Tags {"LightMode" = "LayerFilterBlurRT"}
+            Name "LayerFilterBlurRT"
+            Tags
+            {
+                "LightMode" = "LayerFilterBlurRT"
+            }
 
             HLSLPROGRAM
             #pragma target 4.5
-            
-            #pragma vertex vert
-            #pragma fragment frag
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-
-
-            TEXTURE2D(_DownsampleTex); SAMPLER(sampler_linear_clamp);
-            float4 _DownsampleTex_TexelSize;
-
-            float _blurOffset;
-            
-
-            struct Attributes
-            {
-                float4 positionOS : POSITION;
-                float2 uv : TEXCOORD0;
-            };
-
-            struct Varyings
-            {
-                float4 positionCS : SV_POSITION;
-                float2 uv : TEXCOORD0;
-            }; 
-            
-
-            Varyings vert(Attributes input)
-            {
-                Varyings output = (Varyings)0;
-
-                float4 positionOS = input.positionOS;
-                float3 positionWS = TransformObjectToWorld(positionOS.xyz);
-                float4 positionCS = TransformWorldToHClip(positionWS);
-
-                output.positionCS = positionCS;
-                output.uv = input.uv;
-                return output;
-            } 
-             
-            float4 frag(Varyings input) : SV_Target
-            {
-                float2 baseMapUV = input.uv.xy;
-
-                float offset = _blurOffset;
-                float4 tex_1 = SAMPLE_TEXTURE2D(_DownsampleTex, sampler_linear_clamp, baseMapUV + float2(_DownsampleTex_TexelSize.x * -offset, 0.0));
-                float4 tex_2 = SAMPLE_TEXTURE2D(_DownsampleTex, sampler_linear_clamp, baseMapUV + float2(_DownsampleTex_TexelSize.x * offset, 0.0));
-                float4 tex_3 = SAMPLE_TEXTURE2D(_DownsampleTex, sampler_linear_clamp, baseMapUV + float2(0.0, _DownsampleTex_TexelSize.y * -offset));
-                float4 tex_4 = SAMPLE_TEXTURE2D(_DownsampleTex, sampler_linear_clamp, baseMapUV + float2(0.0, _DownsampleTex_TexelSize.y * offset));
-                
-                float4 finalColor = (tex_1 + tex_2 + tex_3 + tex_4) * 0.25f;
-                return finalColor;
-            }
-            
+            #pragma vertex Vert
+            #pragma fragment blurFrag
             ENDHLSL
         }
     }
 }
-
-  

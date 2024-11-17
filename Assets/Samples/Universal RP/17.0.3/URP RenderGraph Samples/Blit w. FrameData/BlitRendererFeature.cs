@@ -5,106 +5,113 @@ using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-// Example of how Blit operatrions can be handled using frameData using multiple ScriptaleRenderPasses.
+//여러 ScriptableRenderPass를 사용하여 프레임 데이터를 사용하여 Blit 작업을 처리할 수 있는 방법의 예입니다.
 public class BlitRendererFeature : ScriptableRendererFeature
 {
-    // The class living in frameData. It will take care of managing the texture resources.
+    // frameData에 존재하는 클래스입니다. 텍스처 리소스 관리를 담당합니다.
     public class BlitData : ContextItem, IDisposable
     {
-        // Textures used for the blit operations.
+        // 블릿 작업에 사용되는 텍스처입니다.
         RTHandle m_TextureFront;
+
         RTHandle m_TextureBack;
+
         // Render graph texture handles.
         TextureHandle m_TextureHandleFront;
         TextureHandle m_TextureHandleBack;
 
-        // Scale bias is used to control how the blit operation is done. The x and y parameter controls the scale
-        // and z and w controls the offset.
+        // 스케일 바이어스는 블릿 작업이 수행되는 방식을 제어하는 데 사용됩니다. x 및 y 매개변수는 배율을 제어합니다.
+        // 그리고 z와 w는 오프셋을 제어합니다.
         static Vector4 scaleBias = new Vector4(1f, 1f, 0f, 0f);
 
-        // Bool to manage which texture is the most resent.
+        // 어떤 텍스처가 가장 많이 반응하는지 관리하는 부울입니다.
         bool m_IsFront = true;
 
-        // The texture which contains the color buffer from the most resent blit operation.
+        // 가장 최근에 블릿 작업을 수행한 색상 버퍼를 포함하는 텍스처입니다.
         public TextureHandle texture;
 
-        // Function used to initialize BlitDatat. Should be called before starting to use the class for each frame.
+        // BlitData를 초기화하는 데 사용되는 함수입니다. 각 프레임에 대해 클래스 사용을 시작하기 전에 호출해야 합니다.
         public void Init(RenderGraph renderGraph, RenderTextureDescriptor targetDescriptor, string textureName = null)
         {
-            // Checks if the texture name is valid and puts in default value if not.
+            // 텍스처 이름이 유효한지 확인하고 그렇지 않으면 기본값을 입력합니다.
             var texName = String.IsNullOrEmpty(textureName) ? "_BlitTextureData" : textureName;
-            // Reallocate if the RTHandles are being initialized for the first time or if the targetDescriptor has changed since last frame.
-            RenderingUtils.ReAllocateHandleIfNeeded(ref m_TextureFront, targetDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: texName + "Front");
-            RenderingUtils.ReAllocateHandleIfNeeded(ref m_TextureBack, targetDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: texName + "Back");
-            // Create the texture handles inside render graph by importing the RTHandles in render graph.
+            // RTHandles가 처음으로 초기화되거나 마지막 프레임 이후 targetDescriptor가 변경된 경우 재할당합니다.
+            RenderingUtils.ReAllocateHandleIfNeeded(ref m_TextureFront, targetDescriptor, FilterMode.Bilinear,
+                TextureWrapMode.Clamp, name: texName + "Front");
+            RenderingUtils.ReAllocateHandleIfNeeded(ref m_TextureBack, targetDescriptor, FilterMode.Bilinear,
+                TextureWrapMode.Clamp, name: texName + "Back");
+            // 렌더 그래프에서 RTHandles를 가져와 렌더 그래프 내에 텍스처 핸들을 만듭니다.
             m_TextureHandleFront = renderGraph.ImportTexture(m_TextureFront);
             m_TextureHandleBack = renderGraph.ImportTexture(m_TextureBack);
-            // Sets the active texture to the front buffer
+            // 활성 텍스처를 프런트 버퍼로 설정합니다.
             texture = m_TextureHandleFront;
         }
 
-        // We will need to reset the texture handle after each frame to avoid leaking invalid texture handles
-        // since the texture handles only lives for one frame.
+        // 유효하지 않은 텍스처 핸들 누출을 방지하려면 각 프레임 후에 텍스처 핸들을 재설정해야 합니다.
+        // 텍스처 핸들은 한 프레임 동안만 유지되기 때문입니다.
         public override void Reset()
         {
-            // Resets the color buffers to avoid carrying invalid references to the next frame.
-            // This could be BlitData texture handles from last frame which will now be invalid.
+            // 다음 프레임에 잘못된 참조가 전달되는 것을 방지하기 위해 색상 버퍼를 재설정합니다.
+            // 이는 이제 유효하지 않은 마지막 프레임의 BlitData 텍스처 핸들일 수 있습니다.
             m_TextureHandleFront = TextureHandle.nullHandle;
             m_TextureHandleBack = TextureHandle.nullHandle;
             texture = TextureHandle.nullHandle;
-            // Reset the acrive texture to be the front buffer.
+            // 활성 텍스처를 프런트 버퍼로 재설정합니다.
             m_IsFront = true;
         }
 
-        // The data we use to transfer data to the render function.
+        // 데이터를 렌더링 기능으로 전송하는 데 사용하는 데이터입니다.
         class PassData
         {
-            // When makeing a blit operation we will need a source, a destination and a material.
-            // The source and destination is used to know where to copy from and to.
+            // 블릿 작업을 수행할 때 소스, 대상 및 자료가 필요합니다.
+            // 원본과 대상은 복사할 위치를 아는 데 사용됩니다.
             public TextureHandle source;
+
             public TextureHandle destination;
-            // The material is used to transform the color buffer while copying.
+
+            // 재료는 복사하는 동안 색상 버퍼를 변환하는 데 사용됩니다.
             public Material material;
         }
 
-        // For this function we don't take a material as argument to show that we should remember to reset values
-        // we don't use to avoid leaking values from last frame.
+        // 이 함수의 경우 값을 재설정하는 것을 기억해야 함을 보여주기 위해 머티리얼을 인수로 사용하지 않습니다.
+        // 마지막 프레임에서 값이 누출되는 것을 방지하기 위해 사용하지 않습니다.
         public void RecordBlitColor(RenderGraph renderGraph, ContextContainer frameData)
         {
-            // Check if BlitData's texture is valid if it isn't initialize BlitData.
+            // BlitData를 초기화하지 않은 경우 BlitData의 텍스처가 유효한지 확인하세요.
             if (!texture.IsValid())
             {
-                // Setup the descriptor we use for BlitData. We should use the camera target's descriptor as a start.
+                // BlitData에 사용하는 설명자를 설정합니다. 카메라 대상의 설명자를 시작으로 사용해야 합니다.
                 var cameraData = frameData.Get<UniversalCameraData>();
                 var descriptor = cameraData.cameraTargetDescriptor;
-                // We disable MSAA for the blit operations.
+                // blit 작업에 대해 MSAA를 비활성화합니다.
                 descriptor.msaaSamples = 1;
-                // We disable the depth buffer, since we are only makeing transformations to the color buffer.
+                // 색상 버퍼로만 변환하므로 깊이 버퍼를 비활성화합니다.
                 descriptor.depthStencilFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.None;
                 Init(renderGraph, descriptor);
             }
 
-            // Starts the recording of the render graph pass given the name of the pass
-            // and outputting the data used to pass data to the execution of the render function.
+            // 패스 이름이 지정된 렌더 그래프 패스 기록을 시작합니다.
+            // 및 렌더링 기능의 실행에 데이터를 전달하는 데 사용되는 데이터를 출력하는 단계를 포함합니다.
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("BlitColorPass", out var passData))
             {
-                // Fetch UniversalResourceData from frameData to retrive the camera's active color attachment.
+                // 카메라의 활성 색상 첨부 파일을 검색하려면 프레임 데이터에서 UniversalResourceData를 가져옵니다.
                 var resourceData = frameData.Get<UniversalResourceData>();
 
-                // Remember to reset material since it contains the value from last frame.
-                // If we don't do this we would get the material last commited to the BlitPassData using RenderGraph
-                // since we reuse the object allocation.
+                // 마지막 프레임의 값이 포함되어 있으므로 재질을 재설정하는 것을 잊지 마세요.
+                // 이렇게 하지 않으면 객체 할당을 재사용하기 때문에
+                // 렌더 그래프를 사용하여 Blit Pass Data에 대한 마지막 커밋 자료를 얻게 됩니다.
                 passData.material = null;
                 passData.source = resourceData.activeColorTexture;
                 passData.destination = texture;
 
-                // Sets input attachment to the cameras color buffer.
+                // 카메라 색상 버퍼에 대한 입력 첨부를 설정합니다.
                 builder.UseTexture(passData.source);
-                // Sets output attachment 0 to BlitData's active texture.
+                // 출력 첨부 0을 BlitData의 활성 텍스처로 설정합니다.
                 builder.SetRenderAttachment(passData.destination, 0);
 
                 // Sets the render function.
-                builder.SetRenderFunc((PassData passData, RasterGraphContext rgContext) => ExecutePass(passData, rgContext));
+                builder.SetRenderFunc((PassData passData, RasterGraphContext rgContext) =>
+                    ExecutePass(passData, rgContext));
             }
         }
 
@@ -132,7 +139,8 @@ public class BlitRendererFeature : ScriptableRendererFeature
                 builder.SetRenderAttachment(passData.destination, 0);
 
                 // Sets the render function.
-                builder.SetRenderFunc((PassData passData, RasterGraphContext rgContext) => ExecutePass(passData, rgContext));
+                builder.SetRenderFunc((PassData passData, RasterGraphContext rgContext) =>
+                    ExecutePass(passData, rgContext));
             }
         }
 
@@ -173,7 +181,8 @@ public class BlitRendererFeature : ScriptableRendererFeature
                 texture = passData.destination;
 
                 // Sets the render function.
-                builder.SetRenderFunc((PassData passData, RasterGraphContext rgContext) => ExecutePass(passData, rgContext));
+                builder.SetRenderFunc((PassData passData, RasterGraphContext rgContext) =>
+                    ExecutePass(passData, rgContext));
             }
         }
 
@@ -226,14 +235,14 @@ public class BlitRendererFeature : ScriptableRendererFeature
         {
             // Retrives the BlitData from the current frame.
             var blitTextureData = frameData.Get<BlitData>();
-            foreach(var material in m_Materials)
+            foreach (var material in m_Materials)
             {
                 // Skip current cycle if the material is null since there is no need to blit if no
                 // transformation happens.
                 if (material == null) continue;
                 // Records the material blit pass.
                 blitTextureData.RecordFullScreenPass(renderGraph, $"Blit {material.name} Pass", material);
-            }    
+            }
         }
     }
 
@@ -249,7 +258,8 @@ public class BlitRendererFeature : ScriptableRendererFeature
     }
 
     [SerializeField]
-    [Tooltip("Materials used for blitting. They will be blit in the same order they have in the list starting from index 0. ")]
+    [Tooltip(
+        "Materials used for blitting. They will be blit in the same order they have in the list starting from index 0. ")]
     List<Material> m_Materials;
 
     BlitStartRenderPass m_StartPass;
@@ -285,5 +295,3 @@ public class BlitRendererFeature : ScriptableRendererFeature
         renderer.EnqueuePass(m_EndPass);
     }
 }
-
-

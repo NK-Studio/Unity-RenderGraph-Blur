@@ -72,3 +72,6 @@ MonoBehaviour:
     LayerMask:
       serializedVersion: 2
       m_Bits: 64
+    TestShader: {fileID: 4800000, guid: bf070a7e374b4e4e84c09a3dfc933154, type: 3}
+    BlurIteration: 3
+    BlurOffset: 1

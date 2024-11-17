@@ -15,7 +15,7 @@ Shader "FrameBufferFetch"
            #pragma vertex Vert
            #pragma fragment Frag
 
-           // Declares the framebuffer input as a texture 2d containing half.
+           // 프레임 버퍼 입력을 절반을 포함하는 텍스처 2D로 선언합니다.
            FRAMEBUFFER_INPUT_HALF(0);
 
            // Out frag function takes as input a struct that contains the screen space coordinate we are going to use to sample our texture. It also writes to SV_Target0, this has to match the index set in the UseTextureFragment(sourceTexture, 0, …) we defined in our render pass script.   

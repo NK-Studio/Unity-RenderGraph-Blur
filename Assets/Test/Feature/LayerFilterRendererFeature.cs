@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.Rendering.Universal.Internal;
 
 namespace NKStudio
 {
@@ -22,41 +21,54 @@ namespace NKStudio
             public List<string> ShaderTagList = new() { "SpriteRenderPrepass" };
 
             public LayerMask LayerMask = 0;
-            
+
             public Shader TestShader;
-            
-            [Header("Blur Settings")]
-            [Range(1, 5)] public int BlurIteration = 3;
+
+            [Header("Blur Settings")] [Range(1, 5)]
+            public int BlurIteration = 3;
+
             [Range(0.1f, 3.0f)] public float BlurOffset = 1.0f;
         }
 
         public RenderObjectsSettings Settings = new();
 
-        private LayerFilterRendererPass_Prepass _layerFilterRendererPassPrepass;
-       // private LayerFilterRendererPass_Copy _layerFilterRendererPassCopy;
+        private LayerFilterRendererPass _layerFilterRendererPass;
+
+        private Material _blurMaterial;
 
         public override void Create()
         {
             if (Settings.Event < RenderPassEvent.BeforeRenderingPrePasses)
                 Settings.Event = RenderPassEvent.BeforeRenderingPrePasses;
 
-            _layerFilterRendererPassPrepass = new LayerFilterRendererPass_Prepass(Settings.LayerMask,
-                Settings.ShaderTagList, Settings.Event);
+            if (!Settings.TestShader)
+                return;
             
-
-            //var copyMaterial = CoreUtils.CreateEngineMaterial(Settings.TestShader);
-            // _layerFilterRendererPassCopy = new LayerFilterRendererPass_Copy(Settings.Event + 1, copyMaterial);
-            // _layerFilterRendererPassCopy.Setup( Settings.BlurIteration, Settings.BlurOffset);
+            _blurMaterial = CoreUtils.CreateEngineMaterial(Settings.TestShader);
+            _layerFilterRendererPass = new LayerFilterRendererPass(Settings.LayerMask,
+                Settings.ShaderTagList, Settings.Event, _blurMaterial);
+            _layerFilterRendererPass.Setup(Settings.BlurIteration, Settings.BlurOffset);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            if (!Settings.TestShader)
+                return;
+            
             if (renderingData.cameraData.cameraType == CameraType.Preview
                 || UniversalRenderer.IsOffscreenDepthTexture(ref renderingData.cameraData))
                 return;
+            
+            renderer.EnqueuePass(_layerFilterRendererPass);
+        }
 
-            renderer.EnqueuePass(_layerFilterRendererPassPrepass);
-            // renderer.EnqueuePass(_layerFilterRendererPassCopy);
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                CoreUtils.Destroy(_blurMaterial);
+                _blurMaterial = null;
+            }
         }
     }
 }

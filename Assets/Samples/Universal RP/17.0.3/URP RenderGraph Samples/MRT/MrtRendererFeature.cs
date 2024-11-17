@@ -4,7 +4,8 @@ using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-// In this example it is shown how to use Multiple Render Targets (MRT) in RenderGraph using URP. This is useful when more than 4 channels of data (a single RGBA texture) needs to be written by a pass. 
+// 이 예에서는 URP를 사용하여 RenderGraph에서 다중 렌더 타겟(MRT)을 사용하는 방법을 보여줍니다.
+// 이는 패스로 4개 이상의 데이터 채널(단일 RGBA 텍스처)을 작성해야 할 때 유용합니다. 
 public class MrtRendererFeature : ScriptableRendererFeature
 {
     // This pass is using MRT and will output to 3 different Render Targets.
