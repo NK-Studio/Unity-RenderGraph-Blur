@@ -34,6 +34,7 @@ namespace NKStudio
         private float _blurOffset = 1.0f;
         
         private static readonly int k_MainTexPropertyName = Shader.PropertyToID("_MainTex");
+        private static readonly int k_OriginTexPropertyName = Shader.PropertyToID("_OriginTex");
         private static readonly int k_BlurTexPropertyName = Shader.PropertyToID("_BlurTex");
         private static readonly int k_BlurOffsetPropertyName = Shader.PropertyToID("_blurOffset");
         
@@ -115,6 +116,7 @@ namespace NKStudio
         {
             // 블러 오프셋을 설정합니다.
             context.cmd.ClearRenderTarget(RTClearFlags.None, Color.white, 1, 0);
+            context.cmd.SetGlobalTexture(k_OriginTexPropertyName, data.Source);
             context.cmd.SetGlobalFloat(k_BlurOffsetPropertyName, data.BlurOffset);
             
             var unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
@@ -146,20 +148,20 @@ namespace NKStudio
             // 새로운 렌더 타겟 생성
             TextureHandle maskTextureHandle = renderGraph.CreateTexture(cameraColorDesc);
             
-            using (var builder =
-                   renderGraph.AddRasterRenderPass<FilterPassData>("NK Mask", out var passData, profilingSampler))
-            {
-                //  렌더러 목록 초기화
-                InitRendererList(frameData, ref passData, renderGraph, _filterShaderTagIdList);
-
-                // 이 Pass에서 사용할 리소스로 선언하기
-                builder.UseRendererList(passData.RendererList);
-                builder.SetRenderAttachment(maskTextureHandle, 0);
-                builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture);
-
-                // 렌더링 함수 설정
-                builder.SetRenderFunc((FilterPassData data, RasterGraphContext context) => ExecuteFilterPass(data, context));
-            }
+            // using (var builder =
+            //        renderGraph.AddRasterRenderPass<FilterPassData>("NK Mask", out var passData, profilingSampler))
+            // {
+            //     //  렌더러 목록 초기화
+            //     InitRendererList(frameData, ref passData, renderGraph, _filterShaderTagIdList);
+            //
+            //     // 이 Pass에서 사용할 리소스로 선언하기
+            //     builder.UseRendererList(passData.RendererList);
+            //     builder.SetRenderAttachment(maskTextureHandle, 0);
+            //     builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture);
+            //
+            //     // 렌더링 함수 설정
+            //     builder.SetRenderFunc((FilterPassData data, RasterGraphContext context) => ExecuteFilterPass(data, context));
+            // }
             
             // add a raster render pass to the render graph, specifying the name and the data type that will be passed to the ExecutePass function
             using (var builder = renderGraph.AddUnsafePass<MipMapPassData>("NK Blur Mipmap", out var passData))
@@ -167,7 +169,7 @@ namespace NKStudio
                 // 패스에 필요한 데이터로 passData를 채우세요.
             
                 // 프레임 데이터를 통해 활성 색상 텍스처를 가져오고 이를 블릿의 소스 텍스처로 설정합니다.
-                passData.Source = maskTextureHandle;
+                passData.Source = resourceData.activeColorTexture;
                 
                 // Setup Material
                 passData.TargetMaterial = _material;
@@ -197,9 +199,11 @@ namespace NKStudio
                     passData.Scratches[i] = renderGraph.CreateTexture(descriptor);
                     builder.UseTexture(passData.Scratches[i], AccessFlags.ReadWrite);
                 }
+                
+                
 
                 // UseTexture()를 통해 src 텍스처를 이 패스에 대한 입력 종속성으로 선언합니다.
-                builder.UseTexture(maskTextureHandle);
+                builder.UseTexture(resourceData.activeColorTexture);
 
                 // 일반적으로 이 패스가 컬링되므로 이 샘플의 시연 목적으로 이 패스에 대한 컬링을 비활성화합니다.
                 // 대상 텍스처는 다른 곳에서는 사용되지 않기 때문에
@@ -210,19 +214,19 @@ namespace NKStudio
             }
             
             // add a raster render pass to the render graph, specifying the name and the data type that will be passed to the ExecutePass function
-            using (var builder = renderGraph.AddRasterRenderPass<FilterPassData>("Final Draw", out var passData))
-            {
-                //  렌더러 목록 초기화
-                InitRendererList(frameData, ref passData, renderGraph, _drawShaderTagIdList);
-                
-                // 방금 생성한 RendererList를 UseRendererList()를 통해 이 패스에 대한 입력 종속성으로 선언합니다.
-                builder.UseRendererList(passData.RendererList);
-                builder.SetRenderAttachment(resourceData.activeColorTexture, 0);
-                builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture, AccessFlags.Write);
-
-                // Assign the ExecutePass function to the render pass delegate, which will be called by the render graph when executing the pass
-                builder.SetRenderFunc((FilterPassData data, RasterGraphContext context) => ExecuteFilterPass(data, context));
-            }
+            // using (var builder = renderGraph.AddRasterRenderPass<FilterPassData>("Final Draw", out var passData))
+            // {
+            //     //  렌더러 목록 초기화
+            //     InitRendererList(frameData, ref passData, renderGraph, _drawShaderTagIdList);
+            //     
+            //     // 방금 생성한 RendererList를 UseRendererList()를 통해 이 패스에 대한 입력 종속성으로 선언합니다.
+            //     builder.UseRendererList(passData.RendererList);
+            //     builder.SetRenderAttachment(resourceData.activeColorTexture, 0);
+            //     builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture, AccessFlags.Write);
+            //
+            //     // Assign the ExecutePass function to the render pass delegate, which will be called by the render graph when executing the pass
+            //     builder.SetRenderFunc((FilterPassData data, RasterGraphContext context) => ExecuteFilterPass(data, context));
+            // }
         }
 
         private static GraphicsFormat GetGraphicsFormat()
