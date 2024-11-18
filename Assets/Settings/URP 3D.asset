@@ -15,8 +15,8 @@ MonoBehaviour:
   m_Active: 1
   Settings:
     Event: 500
-    BlurIteration: 3
-    BlurOffset: 1
+    BlurIteration: 4
+    BlurOffset: 1.3
     AlwaysShow: 0
 --- !u!114 &-6381596006064814405
 MonoBehaviour:
