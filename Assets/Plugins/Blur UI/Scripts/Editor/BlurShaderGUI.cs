@@ -25,13 +25,22 @@ namespace NKStudio
             FindProperty(properties);
 
             DrawHeader("Blur UI");
-            
+
             InspectorBox(10, () =>
             {
                 EditorGUI.BeginChangeCheck();
                 {
                     materialEditor.ShaderProperty(_blendAmount,
                         new GUIContent("Blur Amount", "UI에 적용되는 흐림 정도를 조정합니다."));
+                }
+            });
+
+            EditorGUILayout.Space(3);
+            
+            InspectorBox(10, () =>
+            {
+                EditorGUI.BeginChangeCheck();
+                {
                     materialEditor.ShaderProperty(_vibrancy,
                         new GUIContent("Vibrancy", "흐릿한 UI의 생동감을 조정합니다."));
                     materialEditor.ShaderProperty(_brightness,
@@ -40,8 +49,12 @@ namespace NKStudio
                         new GUIContent("Flatten", "흐릿한 UI의 병합 효과를 조정합니다."));
                 }
             });
+            
+            EditorGUILayout.Space(3);
+            
+            EditorGUILayout.HelpBox("Play Mode가 실행되어야 블러가 적용됩니다.", MessageType.Info);
         }
-        
+
         private void DrawHeader(string name)
         {
             // Init
@@ -52,7 +65,7 @@ namespace NKStudio
             // Draw
             GUILayout.Label(name, rolloutHeaderStyle, GUILayout.Height(24), GUILayout.ExpandWidth(true));
         }
-        
+
         private static void InspectorBox(int aBorder, System.Action inside)
         {
             Rect r = EditorGUILayout.BeginHorizontal();
