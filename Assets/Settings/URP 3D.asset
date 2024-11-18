@@ -15,9 +15,15 @@ MonoBehaviour:
   m_Active: 1
   Settings:
     Event: 500
+    LayerMask:
+      serializedVersion: 2
+      m_Bits: 64
+    FilterShaderTag:
+    - SpriteRenderPrepass
+    DrawShaderTag:
+    - SpriteRenderDrawpass
     BlurIteration: 3
     BlurOffset: 1
-    AlwaysShow: 0
 --- !u!114 &-6381596006064814405
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33,9 +39,15 @@ MonoBehaviour:
   m_Active: 1
   Settings:
     Event: 500
+    LayerMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    FilterShaderTag:
+    - SpriteRenderPrepass
+    DrawShaderTag:
+    - SpriteRenderDrawpass
     BlurIteration: 3
     BlurOffset: 1.47
-    AlwaysShow: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69,10 +81,10 @@ MonoBehaviour:
   m_AssetVersion: 2
   m_OpaqueLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
   m_TransparentLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
   m_DefaultStencilState:
     overrideStencilState: 0
     stencilReference: 0
