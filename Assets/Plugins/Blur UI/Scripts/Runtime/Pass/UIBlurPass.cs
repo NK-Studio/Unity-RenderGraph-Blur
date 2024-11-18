@@ -13,6 +13,7 @@ namespace NKStudio
         // Blur Settings
         private int _blurIteration = 3;
         private float _blurOffset = 1.0f;
+        private bool _alwaysShow;
 
         // Constants
         private static readonly int DownSampleTexPropertyName = Shader.PropertyToID("_DownSampleTex");
@@ -38,10 +39,12 @@ namespace NKStudio
         /// </summary>
         /// <param name="blurIteration">블러를 이터레이션할 횟수</param>
         /// <param name="blurOffset">블러 오프셋</param>
-        public void Setup(int blurIteration = 3, float blurOffset = 1.0f)
+        /// <param name="alwaysShow">플레이 모드가 되지 않아도 블러가 연출될지 처리합니다.</param>
+        public void Setup(int blurIteration, float blurOffset, bool alwaysShow)
         {
             _blurIteration = blurIteration;
             _blurOffset = blurOffset;
+            _alwaysShow = alwaysShow;
         }
 
         private class MipMapPassData
@@ -50,12 +53,13 @@ namespace NKStudio
             internal TextureHandle[] Scratches;
             internal Material TargetMaterial;
             internal float BlurOffset;
+            internal bool AlwaysShow;
         }
 
         // 이 정적 메서드는 패스를 실행하는 데 사용되며 RenderGraph 렌더 패스에 RenderFunc 대리자로 전달됩니다.
         static void ExecuteMipmapPass(MipMapPassData data, UnsafeGraphContext context)
         {
-            if (Application.isPlaying)
+            if (data.AlwaysShow || Application.isPlaying)
             {
                 context.cmd.SetGlobalTexture(OriginTexPropertyName, data.Source);
                 context.cmd.SetGlobalFloat(BlurOffsetPropertyName, data.BlurOffset);   
@@ -66,7 +70,7 @@ namespace NKStudio
             var stepCount = data.Scratches.Length;
             for (int i = 0; i < stepCount; i++)
             {
-                if (Application.isPlaying)
+                if (data.AlwaysShow || Application.isPlaying)
                     context.cmd.SetGlobalTexture(DownSampleTexPropertyName, source);
 
                 context.cmd.SetRenderTarget(data.Scratches[i]); // 그림을 그릴 대상체를 지정합니다.
@@ -74,7 +78,7 @@ namespace NKStudio
                 source = data.Scratches[i]; // Set Next Source
             }
 
-            if (Application.isPlaying)
+            if (data.AlwaysShow || Application.isPlaying)
                 context.cmd.SetGlobalTexture(BlurTexPropertyName, source);
         }
 
@@ -87,6 +91,9 @@ namespace NKStudio
             // add a raster render pass to the render graph, specifying the name and the data type that will be passed to the ExecutePass function
             using (var builder = renderGraph.AddUnsafePass<MipMapPassData>("Blur UI Mipmap", out var passData))
             {
+                // 플레이 모드가 되지 않아도 동작시킬지 여부를 설정합니다.
+                passData.AlwaysShow = _alwaysShow;
+                
                 // 프레임 데이터를 통해 활성 색상 텍스처를 가져오고 이를 블릿의 소스 텍스처로 설정합니다.
                 passData.Source = resourceData.activeColorTexture;
 

@@ -18,6 +18,9 @@ namespace NKStudio
             public int BlurIteration = 3;
 
             [Range(0.1f, 3.0f)] public float BlurOffset = 1.0f;
+
+            [Tooltip("플레이 모드가 되지 않아도 블러가 연출될지 처리합니다.")]
+            public bool AlwaysShow;
         }
 
         public RenderObjectsSettings Settings = new();
@@ -40,7 +43,7 @@ namespace NKStudio
             
             // 블러 패스를 생성합니다.
             _uiBlurPass = new UIBlurPass(Settings.Event, _blurMaterial);
-            _uiBlurPass.Setup(Settings.BlurIteration, Settings.BlurOffset);
+            _uiBlurPass.Setup(Settings.BlurIteration, Settings.BlurOffset , Settings.AlwaysShow);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)

@@ -17,6 +17,7 @@ MonoBehaviour:
     Event: 500
     BlurIteration: 3
     BlurOffset: 1
+    AlwaysShow: 0
 --- !u!114 &-6381596006064814405
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34,6 +35,7 @@ MonoBehaviour:
     Event: 500
     BlurIteration: 3
     BlurOffset: 1.47
+    AlwaysShow: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

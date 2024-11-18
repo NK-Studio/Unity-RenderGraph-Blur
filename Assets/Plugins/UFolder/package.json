@@ -1,0 +1,13 @@
+{
+  "name": "com.nkstudio.ufolder",
+  "displayName": "UFolder",
+  "version": "1.2.1",
+  "unity": "2021.3",
+  "description": "Provides the ability to express groups as folders in the Unity hierarchy.",
+  "documentationUrl": "https://nk-studio.github.io/UFolder/manual/index.html",
+  "author": {
+    "name": "NK Studio"
+  },
+  "type": "library",
+  "_fingerprint": "18ffc1b77594a324fb94e2b8614e2e3a524fbfb8"
+}
