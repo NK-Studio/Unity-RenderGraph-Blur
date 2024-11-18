@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
@@ -16,7 +15,7 @@ namespace NKStudio
         private float _blurOffset = 1.0f;
 
         // Constants
-        private static readonly int MainTexPropertyName = Shader.PropertyToID("_MainTex");
+        private static readonly int DownSampleTexPropertyName = Shader.PropertyToID("_DownSampleTex");
         private static readonly int OriginTexPropertyName = Shader.PropertyToID("_OriginTex");
         private static readonly int BlurTexPropertyName = Shader.PropertyToID("_BlurTex");
         private static readonly int BlurOffsetPropertyName = Shader.PropertyToID("_blurOffset");
@@ -68,7 +67,7 @@ namespace NKStudio
             for (int i = 0; i < stepCount; i++)
             {
                 if (Application.isPlaying)
-                    context.cmd.SetGlobalTexture(MainTexPropertyName, source);
+                    context.cmd.SetGlobalTexture(DownSampleTexPropertyName, source);
 
                 context.cmd.SetRenderTarget(data.Scratches[i]); // 그림을 그릴 대상체를 지정합니다.
                 Blitter.BlitTexture(unsafeCmd, data.Source, new Vector4(1, 1, 0, 0), data.TargetMaterial, 0); // Draw!
@@ -100,7 +99,7 @@ namespace NKStudio
                 descriptor.clearBuffer = false;
                 
                 // 반복 횟수의 2배로 만들어서 절반은 다운 샘플링으로 활용하고, 나머지 절반은 업 샘플링으로 활용합니다.
-                int scratchesCount = Mathf.Max(_blurIteration * 2 - 1, 1);
+                int scratchesCount = Mathf.Max(_blurIteration * 2, 1);
 
                 int sourceSizeWidth = descriptor.width;
                 int sourceSizeHeight = descriptor.height;
@@ -109,7 +108,7 @@ namespace NKStudio
                 passData.BlurOffset = _blurOffset;
 
                 // 다운 샘플링 Blit 반복
-                for (int i = 0; i < scratchesCount; i++)
+                for (int i = 0; i < scratchesCount-1; i++)
                 {
                     int downsampleIndex = SimplePingPong(i, _blurIteration - 1);
                     descriptor.name = $"Blur UI Mipmap_{i}";
@@ -119,6 +118,13 @@ namespace NKStudio
                     passData.Scratches[i] = renderGraph.CreateTexture(descriptor);
                     builder.UseTexture(passData.Scratches[i], AccessFlags.ReadWrite);
                 }
+                
+                // 최종 스케일 업 결과물
+                descriptor.width = sourceSizeWidth;
+                descriptor.height = sourceSizeHeight;
+                descriptor.name = $"Blur UI Mipmap_{scratchesCount-1}";
+                passData.Scratches[scratchesCount-1] = renderGraph.CreateTexture(descriptor);
+                builder.UseTexture(passData.Scratches[scratchesCount-1], AccessFlags.ReadWrite);
 
                 // UseTexture()를 통해 src 텍스처를 이 패스에 대한 입력 종속성으로 선언합니다.
                 builder.UseTexture(resourceData.activeColorTexture);

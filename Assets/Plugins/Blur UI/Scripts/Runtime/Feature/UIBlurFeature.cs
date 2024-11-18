@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.Serialization;
 
 namespace NKStudio
 {
@@ -29,10 +28,17 @@ namespace NKStudio
 
         public override void Create()
         {
+            // 피쳐의 이름을 지정합니다. (Option)
+            name = "UI Blur";
+            
+            // 렌더 패스 이벤트가 BeforeRenderingPrePasses보다 작으면 BeforeRenderingPrePasses로 설정합니다.
             if (Settings.Event < RenderPassEvent.BeforeRenderingPrePasses)
                 Settings.Event = RenderPassEvent.BeforeRenderingPrePasses;
             
+            // 블러 머티리얼을 생성합니다.
             _blurMaterial = CoreUtils.CreateEngineMaterial(Shader.Find("Hidden/Universal Render Pipeline/UI/ScreenBlurRT"));
+            
+            // 블러 패스를 생성합니다.
             _uiBlurPass = new UIBlurPass(Settings.Event, _blurMaterial);
             _uiBlurPass.Setup(Settings.BlurIteration, Settings.BlurOffset);
         }

@@ -5,8 +5,8 @@
     #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
     SAMPLER(sampler_linear_clamp);
-    TEXTURE2D(_MainTex);
-    float4 _MainTex_TexelSize;
+    TEXTURE2D(_DownSampleTex);
+    float4 _DownSampleTex_TexelSize;
     float _blurOffset;
 
     float4 BlurFrag(Varyings input) : SV_Target
@@ -17,15 +17,15 @@
 
         // 4방향으로 텍스쳐를 샘플링하기 위한 오프셋을 계산합니다.
         float2 offsets[4] = {
-            float2(_MainTex_TexelSize.x * -offset, 0.0),
-            float2(_MainTex_TexelSize.x * offset, 0.0),
-            float2(0.0, _MainTex_TexelSize.y * -offset),
-            float2(0.0, _MainTex_TexelSize.y * offset)
+            float2(_DownSampleTex_TexelSize.x * -offset, 0.0),
+            float2(_DownSampleTex_TexelSize.x * offset, 0.0),
+            float2(0.0, _DownSampleTex_TexelSize.y * -offset),
+            float2(0.0, _DownSampleTex_TexelSize.y * offset)
         };
 
         // 4방향으로 텍스쳐를 샘플링합니다.
         for (int i = 0; i < 4; i++)
-            outputColor += SAMPLE_TEXTURE2D_X(_MainTex, sampler_linear_clamp, uv + offsets[i]);
+            outputColor += SAMPLE_TEXTURE2D_X(_DownSampleTex, sampler_linear_clamp, uv + offsets[i]);
 
         float4 finalColor = outputColor * 0.25f; // 0.25를 곱하면 4로 나누는 효과와 같습니다.
         return finalColor;

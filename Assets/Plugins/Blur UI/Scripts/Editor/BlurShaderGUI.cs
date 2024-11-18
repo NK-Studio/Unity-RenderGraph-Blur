@@ -1,9 +1,11 @@
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 
 namespace NKStudio
 {
-    public class BlurShaderGUI : ShaderGUI
+    [UsedImplicitly]
+    internal class BlurShaderGUI : ShaderGUI
     {
         private MaterialProperty _blendAmount;
         private MaterialProperty _vibrancy;
