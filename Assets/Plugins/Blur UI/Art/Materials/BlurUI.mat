@@ -46,7 +46,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _BlendAmount: 1
-    - _Brightness: 0.1
+    - _Brightness: 0
     - _ColorMask: 15
     - _Flatten: 0
     - _Stencil: 0
