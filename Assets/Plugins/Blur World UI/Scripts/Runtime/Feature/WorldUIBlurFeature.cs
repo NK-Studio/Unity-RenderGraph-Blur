@@ -13,12 +13,12 @@ namespace NKStudio
         [System.Serializable]
         public class RenderObjectsSettings
         {
-            public RenderPassEvent Event = RenderPassEvent.AfterRenderingTransparents;
+            public RenderPassEvent Event = RenderPassEvent.AfterRenderingPostProcessing;
 
             public LayerMask LayerMask = 0;
 
-            public List<string> FilterShaderTag = new() { "SpriteRenderPrepass" };
-            public List<string> DrawShaderTag = new() { "SpriteRenderDrawpass" };
+            public List<string> FilterShaderTag = new() { "WorldUIPrePass" };
+            public List<string> DrawShaderTag = new() { "WorldUIDrawPass" };
 
             [Header("Blur Settings")] [Range(1, 5)]
             public int BlurIteration = 3;
@@ -35,7 +35,7 @@ namespace NKStudio
         public override void Create()
         {
             // 피쳐의 이름을 지정합니다. (Option)
-            name = "UI Blur";
+            name = "Blur UI Feature";
 
             // 렌더 패스 이벤트가 BeforeRenderingPrePasses보다 작으면 BeforeRenderingPrePasses로 설정합니다.
             if (Settings.Event < RenderPassEvent.BeforeRenderingPrePasses)

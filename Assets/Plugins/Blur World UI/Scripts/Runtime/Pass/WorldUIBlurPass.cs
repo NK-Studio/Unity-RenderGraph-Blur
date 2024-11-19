@@ -64,6 +64,7 @@ namespace NKStudio
         private class FilterPassData
         {
             internal RendererListHandle RendererList;
+            internal bool IsPrePass;
         }
 
         private class MipMapPassData
@@ -115,12 +116,10 @@ namespace NKStudio
         /// </summary>
         /// <param name="data">패스 실행에 필요한 데이터입니다.</param>
         /// <param name="context">패스가 실행되는 컨텍스트입니다.</param>
-        private static void ExecuteFilterPass(FilterPassData data, RasterGraphContext context, bool isPrepass)
+        private static void ExecuteFilterPass(FilterPassData data, RasterGraphContext context)
         {
-            if (isPrepass) // 렌더 대상의 배경을 검은색으로 지움
-            {
+            if (data.IsPrePass) // 렌더 대상의 배경을 검은색으로 지움
                 context.cmd.ClearRenderTarget(RTClearFlags.All, Color.black, 1, 0);
-            }
             else // 렌더 대상의 배경을 검은색으로 지움
                 context.cmd.ClearRenderTarget(RTClearFlags.None, Color.white, 1, 0);
 
@@ -156,7 +155,7 @@ namespace NKStudio
 
             // 텍스처의 설명을 가져와서 수정합니다.
             TextureDesc cameraColorDesc = renderGraph.GetTextureDesc(resourceData.cameraColor);
-            cameraColorDesc.name = "SpriteBlurPrepass"; // 텍스처 이름 설정
+            cameraColorDesc.name = "WorldUIBlurPrepass"; // 텍스처 이름 설정
             cameraColorDesc.format = GetGraphicsFormat(); // 그래픽 포맷 설정
             cameraColorDesc.msaaSamples = MSAASamples.None; // MSAA 설정
             
@@ -164,7 +163,7 @@ namespace NKStudio
             TextureHandle maskTextureHandle = renderGraph.CreateTexture(cameraColorDesc);
 
             using (var builder =
-                   renderGraph.AddRasterRenderPass<FilterPassData>("Blur Sprite PrePass", out var passData,
+                   renderGraph.AddRasterRenderPass<FilterPassData>("World Blur UI PrePass", out var passData,
                        profilingSampler))
             {
                 //  렌더러 목록 초기화
@@ -177,11 +176,11 @@ namespace NKStudio
 
                 // 렌더링 함수 설정
                 builder.SetRenderFunc((FilterPassData data, RasterGraphContext context) =>
-                    ExecuteFilterPass(data, context, true));
+                    ExecuteFilterPass(data, context));
             }
 
             // add a raster render pass to the render graph, specifying the name and the data type that will be passed to the ExecutePass function
-            using (var builder = renderGraph.AddUnsafePass<MipMapPassData>("Blur Sprite Mipmap", out var passData))
+            using (var builder = renderGraph.AddUnsafePass<MipMapPassData>("World Blur UI Mipmap", out var passData))
             {
                 // 프레임 데이터를 통해 활성 색상 텍스처를 가져오고 이를 블릿의 소스 텍스처로 설정합니다.
                 passData.Source = maskTextureHandle;
@@ -234,7 +233,7 @@ namespace NKStudio
             }
 
             // add a raster render pass to the render graph, specifying the name and the data type that will be passed to the ExecutePass function
-            using (var builder = renderGraph.AddRasterRenderPass<FilterPassData>("Blur Sprite Draw", out var passData))
+            using (var builder = renderGraph.AddRasterRenderPass<FilterPassData>("World Blur UI Draw", out var passData))
             {
                 //  렌더러 목록 초기화
                 InitRendererList(frameData, ref passData, renderGraph, _drawShaderTagIdList);
@@ -243,9 +242,9 @@ namespace NKStudio
                 builder.UseRendererList(passData.RendererList);
                 builder.SetRenderAttachment(resourceData.activeColorTexture, 0);
 
-                // Assign the ExecutePass function to the render pass delegate, which will be called by the render graph when executing the pass
+                // 패스를 실행할 때 렌더 그래프에 의해 호출되는 렌더 패스 대리자에 ExecutePass 함수를 할당합니다.
                 builder.SetRenderFunc((FilterPassData data, RasterGraphContext context) =>
-                    ExecuteFilterPass(data, context, false));
+                    ExecuteFilterPass(data, context));
             }
         }
 
