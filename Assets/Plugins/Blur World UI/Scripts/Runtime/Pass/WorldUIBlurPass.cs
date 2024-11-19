@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace NKStudio
 {
-    public class SpriteBlurPass : ScriptableRenderPass
+    public class WorldUIBlurPass : ScriptableRenderPass
     {
         // Material
         private readonly Material _material;
@@ -22,10 +22,11 @@ namespace NKStudio
 
         // Constants
         private static readonly int DownSampleTexPropertyName = Shader.PropertyToID("_DownSampleTex");
+        private static readonly int OriginTexPropertyName = Shader.PropertyToID("_OriginTex");
         private static readonly int BlurTexPropertyName = Shader.PropertyToID("_BlurTex");
         private static readonly int BlurOffsetPropertyName = Shader.PropertyToID("_blurOffset");
 
-        public SpriteBlurPass(LayerMask layerMask, List<string> shaderTagIdList, List<string> drawShaderTagIdList,
+        public WorldUIBlurPass(LayerMask layerMask, List<string> shaderTagIdList, List<string> drawShaderTagIdList,
             RenderPassEvent injectionPoint, Material material)
         {
             _layerMask = layerMask;
@@ -130,6 +131,8 @@ namespace NKStudio
         // 이 정적 메서드는 패스를 실행하는 데 사용되며 RenderGraph 렌더 패스에 RenderFunc 대리자로 전달됩니다.
         static void ExecuteMipmapPass(MipMapPassData data, UnsafeGraphContext context)
         {
+            context.cmd.SetGlobalTexture(OriginTexPropertyName, data.Source);
+            
             var unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
             var source = data.Source;
             var stepCount = data.Scratches.Length;
@@ -156,7 +159,7 @@ namespace NKStudio
             cameraColorDesc.name = "SpriteBlurPrepass"; // 텍스처 이름 설정
             cameraColorDesc.format = GetGraphicsFormat(); // 그래픽 포맷 설정
             cameraColorDesc.msaaSamples = MSAASamples.None; // MSAA 설정
-
+            
             // 새로운 렌더 타겟 생성
             TextureHandle maskTextureHandle = renderGraph.CreateTexture(cameraColorDesc);
 
@@ -222,8 +225,7 @@ namespace NKStudio
                 // UseTexture()를 통해 src 텍스처를 이 패스에 대한 입력 종속성으로 선언합니다.
                 builder.UseTexture(maskTextureHandle);
 
-                // 일반적으로 이 패스가 컬링되므로 이 샘플의 시연 목적으로 이 패스에 대한 컬링을 비활성화합니다.
-                // 대상 텍스처는 다른 곳에서는 사용되지 않기 때문에
+                // 최적화로 인해 Pass가 컬링되는 것을 방지합니다.
                 builder.AllowPassCulling(false);
 
                 // 패스를 실행할 때 렌더 그래프에 의해 호출되는 렌더 패스 대리자에 ExecutePass 함수를 할당합니다.
@@ -257,8 +259,7 @@ namespace NKStudio
                 ? GraphicsFormat.R8G8B8A8_SRGB
                 : GraphicsFormat.R8G8B8A8_UNorm;
         }
-
-
+        
         private static int SimplePingPong(int t, int max)
         {
             if (t > max) return 2 * max - t;

@@ -5,7 +5,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace NKStudio
 {
-    public sealed class SpriteBlurFeature : ScriptableRendererFeature
+    public sealed class WorldUIBlurFeature : ScriptableRendererFeature
     {
         /// <summary>
         /// 렌더 객체 렌더러 기능에 사용되는 설정 클래스입니다.
@@ -28,7 +28,7 @@ namespace NKStudio
 
         public RenderObjectsSettings Settings = new();
 
-        private SpriteBlurPass _spriteBlurPass;
+        private WorldUIBlurPass _worldUIBlurPass;
 
         private Material _blurMaterial;
 
@@ -46,9 +46,9 @@ namespace NKStudio
                 CoreUtils.CreateEngineMaterial(Shader.Find("Hidden/Universal Render Pipeline/UI/ScreenBlurRT"));
 
             // 블러 패스를 생성합니다.
-            _spriteBlurPass = new SpriteBlurPass(Settings.LayerMask, Settings.FilterShaderTag, Settings.DrawShaderTag,
+            _worldUIBlurPass = new WorldUIBlurPass(Settings.LayerMask, Settings.FilterShaderTag, Settings.DrawShaderTag,
                 Settings.Event, _blurMaterial);
-            _spriteBlurPass.Setup(Settings.BlurIteration, Settings.BlurOffset);
+            _worldUIBlurPass.Setup(Settings.BlurIteration, Settings.BlurOffset);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -57,7 +57,7 @@ namespace NKStudio
                 || UniversalRenderer.IsOffscreenDepthTexture(ref renderingData.cameraData))
                 return;
 
-            renderer.EnqueuePass(_spriteBlurPass);
+            renderer.EnqueuePass(_worldUIBlurPass);
         }
 
         protected override void Dispose(bool disposing)

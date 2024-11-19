@@ -19,11 +19,11 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 64
     FilterShaderTag:
-    - SpriteRenderPrepass
+    - WorldUIPrePass
     DrawShaderTag:
-    - SpriteRenderDrawpass
-    BlurIteration: 3
-    BlurOffset: 1
+    - WorldUIDrawPass
+    BlurIteration: 4
+    BlurOffset: 1.6
 --- !u!114 &-6381596006064814405
 MonoBehaviour:
   m_ObjectHideFlags: 0

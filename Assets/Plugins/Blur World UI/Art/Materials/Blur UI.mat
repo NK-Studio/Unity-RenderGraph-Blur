@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SpriteUI
-  m_Shader: {fileID: 4800000, guid: 9f6141dcb6b841e0af199303b91da241, type: 3}
+  m_Name: Blur UI
+  m_Shader: {fileID: 4800000, guid: 52408a17a6cb4ce09d8993bb1b49dc7c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
