@@ -167,6 +167,9 @@ namespace NKStudio
                 //  렌더러 목록 초기화
                 InitRendererList(frameData, ref passData, renderGraph, _filterShaderTagIdList);
 
+                // 최적화로 인해 Pass가 컬링되는 것을 방지합니다.
+                builder.AllowPassCulling(false);
+                
                 // 이 Pass에서 사용할 리소스로 선언하기
                 builder.UseRendererList(passData.RendererList);
                 builder.SetRenderAttachment(maskTextureHandle, 0);
@@ -222,8 +225,7 @@ namespace NKStudio
                 // UseTexture()를 통해 src 텍스처를 이 패스에 대한 입력 종속성으로 선언합니다.
                 builder.UseTexture(maskTextureHandle);
 
-                // 일반적으로 이 패스가 컬링되므로 이 샘플의 시연 목적으로 이 패스에 대한 컬링을 비활성화합니다.
-                // 대상 텍스처는 다른 곳에서는 사용되지 않기 때문에
+                // 최적화로 인해 Pass가 컬링되는 것을 방지합니다.
                 builder.AllowPassCulling(false);
 
                 // 패스를 실행할 때 렌더 그래프에 의해 호출되는 렌더 패스 대리자에 ExecutePass 함수를 할당합니다.
@@ -237,6 +239,9 @@ namespace NKStudio
                 //  렌더러 목록 초기화
                 InitRendererList(frameData, ref passData, renderGraph, _drawShaderTagIdList);
 
+                // 최적화로 인해 Pass가 컬링되는 것을 방지합니다.
+                builder.AllowPassCulling(false);
+                
                 // 방금 생성한 RendererList를 UseRendererList()를 통해 이 패스에 대한 입력 종속성으로 선언합니다.
                 builder.UseRendererList(passData.RendererList);
                 builder.SetRenderAttachment(resourceData.activeColorTexture, 0);
