@@ -13,7 +13,7 @@ namespace NKStudio
         [System.Serializable]
         public class RenderObjectsSettings
         {
-            public RenderPassEvent Event = RenderPassEvent.AfterRenderingTransparents;
+            public RenderPassEvent Event = RenderPassEvent.AfterRenderingPostProcessing;
 
             public LayerMask LayerMask = 0;
 
