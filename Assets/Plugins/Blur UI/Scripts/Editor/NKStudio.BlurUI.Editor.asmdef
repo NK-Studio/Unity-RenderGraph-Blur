@@ -1,7 +1,9 @@
 {
     "name": "NKStudio.BlurUI.Editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:f167587a9f69f664faf5b17f0a0cdb26"
+    ],
     "includePlatforms": [
         "Editor"
     ],

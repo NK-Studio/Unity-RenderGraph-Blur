@@ -1343,7 +1343,7 @@
     "m_AdditionalMotionVectorMode": 0,
     "m_AlembicMotionVectors": false,
     "m_SupportsLODCrossFade": false,
-    "m_CustomEditorGUI": "NKStudio.BlurShaderGUI",
+    "m_CustomEditorGUI": "",
     "m_SupportVFX": false
 }
 
