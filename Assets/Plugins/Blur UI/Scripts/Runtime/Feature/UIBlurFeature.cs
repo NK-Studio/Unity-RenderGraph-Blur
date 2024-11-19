@@ -32,7 +32,7 @@ namespace NKStudio
         public override void Create()
         {
             // 피쳐의 이름을 지정합니다. (Option)
-            name = "UI Blur";
+            name = "UI Blur Feature";
             
             // 렌더 패스 이벤트가 BeforeRenderingPrePasses보다 작으면 BeforeRenderingPrePasses로 설정합니다.
             if (Settings.Event < RenderPassEvent.BeforeRenderingPrePasses)
