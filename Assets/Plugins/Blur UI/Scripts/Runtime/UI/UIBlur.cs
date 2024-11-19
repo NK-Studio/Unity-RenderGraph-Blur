@@ -6,7 +6,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Image))]
 [ExecuteAlways]
 [DisallowMultipleComponent]
-[AddComponentMenu("UI/UI Blur")]
+[AddComponentMenu("UI/Blur UI")]
 public class UIBlur : UIBehaviour, IMaterialModifier
 {
     [Tooltip("UI에 적용되는 흐림 정도를 조정합니다.")]

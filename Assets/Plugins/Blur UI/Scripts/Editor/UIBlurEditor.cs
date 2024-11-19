@@ -49,7 +49,7 @@ namespace NKStudio
             _root.styleSheets.Add(_styleSheet);
 
             var title = new Label();
-            title.text = "UI Blur";
+            title.text = "Blur UI";
             title.AddToClassList("TitleStyle");
             _root.Add(title);
 
