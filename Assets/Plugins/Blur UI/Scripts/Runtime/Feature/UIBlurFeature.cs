@@ -12,7 +12,7 @@ namespace NKStudio
         [System.Serializable]
         public class RenderObjectsSettings
         {
-            public RenderPassEvent Event = RenderPassEvent.AfterRenderingTransparents;
+            public RenderPassEvent Event = RenderPassEvent.AfterRenderingPostProcessing;
 
             [Header("Blur Settings")] [Range(1, 5)]
             public int BlurIteration = 3;
