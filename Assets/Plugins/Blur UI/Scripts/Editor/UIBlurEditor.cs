@@ -99,8 +99,13 @@ namespace NKStudio
                 bool isBlurMaterial = image.material.shader.name == "UI/SG_BlurUI";
                 if (!isBlurMaterial)
                 {
-                    image.material =
-                        AssetDatabase.LoadAssetAtPath<Material>("Assets/Plugins/Blur UI/Art/Materials/BlurUI.mat");
+                    var targetPath = "Assets/Plugins/Blur UI/Art/Materials/BlurUI.mat";
+                    var blurMaterial = AssetDatabase.LoadAssetAtPath<Material>(targetPath);
+
+                    Debug.Assert(blurMaterial != null, $"{targetPath}경로에 블러 머티리얼이 존재하지 않습니다.");
+
+                    image.material = blurMaterial;
+
                 }
             }
         }
